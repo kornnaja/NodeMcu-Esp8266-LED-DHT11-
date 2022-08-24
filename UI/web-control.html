@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>AdminLTE | Dashboard</title>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <!-- bootstrap 3.0.2 -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <!-- font Awesome -->
+    <link href="css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <!-- Ionicons -->
+    <link href="css/ionicons.min.css" rel="stylesheet" type="text/css">
+    <!-- Theme style -->
+    <link href="css/AdminLTE.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- jQuery 2.0.2 -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+    <!-- AdminLTE App -->
+    <!-- ##################################  connection mqtt broker   ###################################### -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        //sample HTML/JS script that will publish/subscribe to topics in the Google Chrome Console
+        var wsbroker = "broker.hivemq.com";  //mqtt websocket enabled broker
+        var wsport = 8000 // port for above
+        var client = new Paho.MQTT.Client(wsbroker, wsport,
+            "myclientid_" + parseInt(Math.random() * 100, 10));
+        client.onConnectionLost = function (responseObject) {
+            console.log("connection lost: " + responseObject.errorMessage);
+        };
+        client.onMessageArrived = function (message) {
+            switch (message.destinationName) {
+                case 'test/korn':
+                    if (message.payloadString == "5555") {
+                        $('#D6').prop(':checked', true);
+
+                    } else if (message.payloadString == "11000") {
+                        $('#D6').prop(':checked', false);
+                    }
+                    break;
+                /*  case 'korn/myboard/swtich/red':
+                     if (message.payloadString == "0") {
+                         $('#D6').prop(':checked', true);
+                         
+                     } else if (message.payloadString == "1") {
+                         $('#D6').prop(':checked', false);
+                         
+                     }
+                     break;
+ 
+                     case 'korn/myboard/swtich/blue':
+                         if (message.payloadString == "1") {
+                             $('#D7').prop(':checked', true);
+                         } else if (message.payloadString == "0") {
+                             $('#D7').prop(':checked', false);
+                         }
+                         break;
+ 
+                     case 'korn/myboard/swtich/green':
+                         if (message.payloadString == "1") {
+                             $('#D8').prop('checked', true);
+                         } else if (message.payloadString == "0") {
+                             $('#D8').prop('checked', false);
+                         }
+                         break; 
+ 
+ 
+                 case 'test/korn':
+                     $('.knob').val(message.payloadString).change();
+                     break; */
+
+            }
+        };
+        var options = {
+            timeout: 3,
+            onSuccess: function () {
+                $("#status").text("การเชื่อมสำเร็จ");
+                $("#status").toggleClass("colorGreen");
+                console.log("mqtt connected");
+                // Connection succeeded; subscribe to our topic, you can add multile lines of these
+                client.subscribe('korn/myboard/swtich', { qos: 0 }); //แก้ไข topic ให้เป็น group ของตัวเอง
+                client.subscribe('test/korn', { qos: 0 });
+            },
+            onFailure: function (message) {
+                $("#status").text("การเชื่อมต่อล้มเหลว ลองใหม่อีกครั้ง");
+                $("#status").toggleClass("colorRed");
+                console.log("Connection failed: " + message.errorMessage);
+            }
+        };
+
+        function init() {
+            client.connect(options);
+        };
+
+
+
+        function publish(topic, payload) {
+            message = new Paho.MQTT.Message(payload);
+            message.destinationName = topic;
+            message.retained = true;
+            message.qos = 2;
+            client.send(message);
+        };
+        function toggle() {
+            
+         publish('test/korn', '55444'); //แก้ไข topic ให้เป็น group ของตัวเอง
+            
+        }
+        function toggle2() {
+            if ($('#D7').is(':checked')) {
+                publish('test/korn', 'korn'); //แก้ไข topic ให้เป็น group ของตัวเอง
+            } else {
+                publish('test/korn', 'kan'); //แก้ไข topic ให้เป็น group ของตัวเอง
+            }
+        }
+
+        function toggle3() {
+            if ($('#D8').is(':checked')) {
+                publish('korn/myboard/swtich', 'greenon'); //แก้ไข topic ให้เป็น group ของตัวเอง
+            } else {
+                publish('korn/myboard/swtich', 'greenoff'); //แก้ไข topic ให้เป็น group ของตัวเอง
+            }
+        }
+    </script>
+    <!-- ##################################  connection mqtt broker   ###################################### -->
+</head>
+
+<body class="skin-black">
+    <div class="wrapper row-offcanvas row-offcanvas-left">
+        <!-- Right side column. Contains the navbar and content of the page -->
+        <aside class="right-side">
+            <!-- Main content -->
+            <section class="content">
+                <h1 style="color: #b30000;">CHAMIKORN CHANAKICHAROEN CN 044</h1>
+                <div>สถานะการเชื่อมต่อเซิร์ฟเวอร์ :
+                    <span id="status"></span>
+                </div>
+                <!-- row -->
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div class="box box-solid"></div>
+                        <!-- /.box -->
+                    </div>
+                    <!-- /.col -->
+                </div>
+                <!-- /.row -->
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div class="box-header">
+                            <i class="fa fa-bar-chart-o"></i>
+                            <h3 class="box-title">แผงควบคุมหลอดไฟ</h3>
+                        </div>
+
+
+
+
+
+
+
+                        <button type="submit" id="D6" onchange="toggle()" class="btn btn-primary">subscribe</button>
+
+
+
+
+                        <div class="box-body">
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6 col-xs-6 text-center">
+                                    <div class="box-body text-center">
+                                        <h4>Blue</h4>
+                                        <label class="switch">
+                                            <input type="checkbox" id="D7" onchange="toggle2()">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <!-- ./col -->
+                            </div>
+                            <!-- /.row -->
+                        </div>
+                        <!-- /.box-body -->
+                        <div class="box-body">
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6 col-xs-6 text-center">
+                                    <div class="box-body text-center">
+                                        <h4>Green</h4>
+                                        <label class="switch">
+                                            <input type="checkbox" id="D8" onchange="toggle3()">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <!-- ./col -->
+                            </div>
+                            <!-- /.row -->
+                        </div>
+                        <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                </div>
+                <!-- /.col -->
+    </div>
+    <!-- /.row -->
+    </section>
+    <!-- /.content -->
+    </aside>
+    <!-- /.right-side -->
+    </div>
+    <!-- ./wrapper -->
+    <!-- Bootstrap -->
+    <script src="js/bootstrap.min.js" type="text/javascript"></script>
+    <script src="js/AdminLTE/app.js" type="text/javascript"></script>
+    <!-- jQuery Knob -->
+    <script src="js/plugins/jqueryKnob/jquery.knob.js" type="text/javascript"></script>
+    <!-- Sparkline -->
+    <script src="js/plugins/sparkline/jquery.sparkline.min.js" type="text/javascript"></script>
+    <!-- page script -->
+    <script type="text/javascript">
+        $(function () {
+            /* jQueryKnob */
+
+            $(".knob").knob({
+
+                // change : function (value) {
+                //  console.log("change : " + value);
+                //  },
+                //  release : function (value) {
+                //  console.log("release : " + value);
+                //  },
+                //  cancel : function () {
+                //  console.log("cancel : " + this.value);
+                //  },
+
+                draw: function () {
+
+                    // "tron" case
+                    if (this.$.data('skin') == 'tron') {
+
+                        var a = this.angle(this.cv)  // Angle
+                            , sa = this.startAngle          // Previous start angle
+                            , sat = this.startAngle         // Start angle
+                            , ea                            // Previous end angle
+                            , eat = sat + a                 // End angle
+                            , r = true;
+
+                        this.g.lineWidth = this.lineWidth;
+
+                        this.o.cursor
+                            && (sat = eat - 0.3)
+                            && (eat = eat + 0.3);
+
+                        if (this.o.displayPrevious) {
+                            ea = this.startAngle + this.angle(this.value);
+                            this.o.cursor
+                                && (sa = ea - 0.3)
+                                && (ea = ea + 0.3);
+                            this.g.beginPath();
+                            this.g.strokeStyle = this.previousColor;
+                            this.g.arc(this.xy, this.xy, this.radius - this.lineWidth, sa, ea, false);
+                            this.g.stroke();
+                        }
+
+                        this.g.beginPath();
+                        this.g.strokeStyle = r ? this.o.fgColor : this.fgColor;
+                        this.g.arc(this.xy, this.xy, this.radius - this.lineWidth, sat, eat, false);
+                        this.g.stroke();
+
+                        this.g.lineWidth = 2;
+                        this.g.beginPath();
+                        this.g.strokeStyle = this.o.fgColor;
+                        this.g.arc(this.xy, this.xy, this.radius - this.lineWidth + 1 + this.lineWidth * 2 / 3, 0, 2 * Math.PI, false);
+                        this.g.stroke();
+
+                        return false;
+                    }
+                }
+            });
+            /* END JQUERY KNOB */
+
+
+        });
+        init();
+    </script>
+</body>
+
+</html>
